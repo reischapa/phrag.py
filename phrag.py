@@ -21,14 +21,6 @@ if EXECUTION_PATH == None:
   print("Could not properly set execution path. Exiting...")
   exit()
 
-config = {
-  "write": False,
-  "workingDir": "./"
-};
-
-if "--write" or "-w" in sys.argv:
-  config["write"] = True
-
 phragDirPath = os.path.join(EXECUTION_PATH, "phrag")
 
 if not os.path.isdir(phragDirPath):
@@ -92,10 +84,8 @@ for phragDef in phragDefs:
 
     templateContent = templateContent.replace(phragMarker, phragFileContent)
 
-  if config["write"]:
-    print("Writing file " + phragDef + "...")
-    with open(phragDef, "w") as file:
-      file.write(templateContent)
-  else:
-    print("Did not write file " + phragDef + " because the --write (or -w) flag was not passed") 
+  print("Writing file " + phragDef + "...")
+  with open(os.path.join(EXECUTION_PATH, phragDef), "w") as file:
+    file.write(templateContent)
+  print("Done.")
 
