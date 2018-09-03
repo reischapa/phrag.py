@@ -17,6 +17,8 @@ def getExecutionPath(argv):
 
 EXECUTION_PATH = getExecutionPath(sys.argv)
 
+IS_DRY_RUN = "--dryRun" in sys.argv
+
 if EXECUTION_PATH == None:
   print("Could not properly set execution path. Exiting...")
   exit()
@@ -27,7 +29,7 @@ if not os.path.isdir(phragDirPath):
   print("Execution path " + EXECUTION_PATH + " does not contain phrag dir. Exiting...")
   exit()
 
-phragDefs = list(filter(lambda x: x, os.listdir(phragDirPath)))
+phragDefs = os.listdir(phragDirPath)
 
 for phragDef in phragDefs:
   phragDefFileNames = os.listdir(os.path.join(EXECUTION_PATH, "phrag", phragDef))
@@ -46,28 +48,35 @@ for phragDef in phragDefs:
 
   phragMarkers = re.findall('{{.*}}', templateContent)
 
-  phragsFileRefs = [fr for fr in fileRefs if ".template" not in fr["name"] and ".default" not in fr["name"]]
+  phragsFileRefs = [fr for fr in fileRefs if ".template" not in fr["name"]]
 
-  for phragFileRef in phragsFileRefs:
-    defaultFileRef = next((fr for fr in fileRefs if fr["name"] == phragFileRef["name"] + "." + "default"), None)
-    phragFileRef["default"] = defaultFileRef
+  for phragFileRef in list(filter(lambda x: ".default" in x["name"], phragsFileRefs)):
+    existingRef = next((f for f in phragsFileRefs if f["name"] == phragFileRef["name"].replace(".default", "")), None)
+    if existingRef == None:
+      dictCopy = dict(phragFileRef)
+      dictCopy["name"] = dictCopy["name"].replace(".default", "")
+      phragsFileRefs.append(dictCopy)
+    continue
 
+  phragsFileRefs = [fr for fr in phragsFileRefs if ".default" not in fr["name"]]
 
   for phragMarker in phragMarkers:
     bareName = phragMarker.replace("{{", "").replace("}}", "")
-    matchingFileRef = next((fr for fr in fileRefs if fr["name"] == bareName), None)
+    matchingFileRef = next((fr for fr in phragsFileRefs if fr["name"] == bareName), None)
     if matchingFileRef == None:
+      print("No matching file (or default file) found for marker " + phragMarker + ".")
       continue
 
     phragFileContent = None
 
     file = None
-    
+
     try:
       file = open(matchingFileRef["path"], "r")
       phragFileContent = file.read()
       file.close()
     except Error:
+      print("Could not open file " + matchingFileRef["path"])
       if file is not None:
         file.close()
 
@@ -84,8 +93,12 @@ for phragDef in phragDefs:
 
     templateContent = templateContent.replace(phragMarker, phragFileContent)
 
-  print("Writing file " + phragDef + "...")
-  with open(os.path.join(EXECUTION_PATH, phragDef), "w") as file:
-    file.write(templateContent)
-  print("Done.")
+  if (IS_DRY_RUN):
+    print("WARNING: --dryRun flag passed. The file will not be written")
+    print(templateContent)
+  else:
+    print("Writing file " + phragDef + "...")
+    with open(os.path.join(EXECUTION_PATH, phragDef), "w") as file:
+      file.write(templateContent)
+    print("Done.")
 
