@@ -50,14 +50,16 @@ for phragDef in phragDefs:
 
   phragsFileRefs = [fr for fr in fileRefs if ".template" not in fr["name"]]
 
-  for phragFileRef in list(filter(lambda x: ".default" in x["name"], phragsFileRefs)):
+  defaultPhragFileRefs = list(filter(lambda x: ".default" in x["name"], phragsFileRefs))
+
+  for phragFileRef in defaultPhragFileRefs:
     existingRef = next((f for f in phragsFileRefs if f["name"] == phragFileRef["name"].replace(".default", "")), None)
     if existingRef == None:
       dictCopy = dict(phragFileRef)
       dictCopy["name"] = dictCopy["name"].replace(".default", "")
       phragsFileRefs.append(dictCopy)
-    continue
 
+ 
   phragsFileRefs = [fr for fr in phragsFileRefs if ".default" not in fr["name"]]
 
   for phragMarker in phragMarkers:
@@ -67,7 +69,7 @@ for phragDef in phragDefs:
       print("No matching file (or default file) found for marker " + phragMarker + ".")
       continue
 
-    phragFileContent = None
+    phragFileContent = "" 
 
     file = None
 
@@ -79,17 +81,6 @@ for phragDef in phragDefs:
       print("Could not open file " + matchingFileRef["path"])
       if file is not None:
         file.close()
-
-    if phragFileContent is None or len(phragFileContent) == 0:
-
-      phragDefaultFileContent = None
-
-      if matchingFileRef["default"] is not None:
-        with open(matchingFileRef["default"]["path"], "r") as file:
-          phragDefaultFileContent = file.read()
-
-      if phragDefaultFileContent is not None:
-        phragFileContent = phragDefaultFileContent
 
     templateContent = templateContent.replace(phragMarker, phragFileContent)
 
