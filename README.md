@@ -14,7 +14,7 @@ So, how can phrag help?
 
 The i3wm `config` file is, by default (at least on ubuntu, which I use), on `~/.config/i3/config`.
 
-Create a folder inside that folder called `phrag` (so, `~/.config/i3/config/phrag`).
+Create a folder inside that folder called `phrag` (so, `~/.config/i3/phrag`).
 
 Inside that folder, create a folder called `config` (note, same name as the file we will end up creating).
 
